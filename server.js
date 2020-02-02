@@ -1,37 +1,23 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongodb = require('mongodb');
 const app = express();
+
+const { dbMiddleware } = require('./middlewares');
 
 // HTTP SERVER PORT
 const SERVICE_PORT = 9000;
 
 // DB CONFIG
 const dbConfig = {
-    uri: 'mongodb://localhost:27017'
+    uri: 'mongodb://localhost:27017',
+    db: 'test'
 }
-
-const connectionDb = async () => {
-    const client = await MongoClient.connect(dbConfig.uri, { useNewUrlParser: true });
-    console.log('connected to db');
-
-    return client.db('test');
-}
-
-// const db = MongoClient.connect(dbConfig.uri);
 
 app.use(express.json()); // untuk mempermudah akses req.body
 app.use(express.urlencoded({ extended: true }));
 
-// buat fungsi agar koneksi dilakukan sekali saja
-const dbMiddleware = async (req, res, next) => {
-    if(!res.locals.db) {
-        const db = await connectionDb();
-        res.locals.db = db;
-        next();
-    }
-}
-
-app.use(dbMiddleware);
+db = dbMiddleware(app, mongodb, dbConfig);
+app.use(db);
 
 app.post('/register', async (req, res) => {
     const { db } = res.locals;
